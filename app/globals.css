@@ -1,0 +1,267 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
+}
+
+@keyframes pulse-glowing {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(198, 40, 40, 0.4), 0 0 20px rgba(198, 40, 40, 0.2);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(198, 40, 40, 0.8), 0 0 40px rgba(198, 40, 40, 0.4);
+    transform: scale(1.02);
+  }
+}
+
+.animate-pulse-glowing {
+  animation: pulse-glowing 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@layer base {
+  html, body {
+    @apply overflow-x-hidden;
+    position: relative;
+    width: 100%;
+  }
+  body {
+    @apply bg-[#FDFCF0] text-[#1A1A1A] font-sans antialiased;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* Ensure all buttons and inputs have reasonable touch targets on mobile */
+@media (max-width: 768px) {
+  button, 
+  a, 
+  input, 
+  select, 
+  textarea {
+    min-height: 44px;
+  }
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.scrollbar-none {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+/* CSS Layout Containment Utilities for high-performance virtualized grid rendering */
+.contain-layout {
+  contain: layout;
+}
+.contain-layout-style {
+  contain: layout style;
+}
+.contain-layout-style-paint {
+  contain: layout style paint;
+}
+.contain-strict {
+  contain: strict;
+}
+.contain-content {
+  contain: content;
+}
+
+.rdp-dark .rdp-caption_label,
+.rdp-dark .rdp-nav_button_previous,
+.rdp-dark .rdp-nav_button_next {
+  color: white !important;
+}
+
+@media print {
+  @page { 
+    size: A5 portrait; 
+    margin: 0; 
+  }
+  
+  /* Hide everything except the print overlay */
+  body > *:not(#booking-print-overlay) { 
+    display: none !important; 
+  }
+  
+  #booking-print-overlay {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 999999 !important;
+    background: white !important;
+    width: 148mm !important;
+    height: 210mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
+  }
+
+  .no-print, .close-button, button, svg[class*="rotate-45"] { 
+    display: none !important; 
+  }
+
+  /* Format original modal card beautifully for A5 printed paper */
+  .print-card-container {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 148mm !important;
+    height: 210mm !important;
+    max-width: none !important;
+    background: white !important;
+    color: bg-neutral-900 !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 14mm 8mm 14mm 8mm !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+    justify-content: flex-start !important;
+    overflow: hidden !important;
+  }
+
+  /* Force background colors and text-colors to exact outputs */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .print-card-container h2,
+  .print-card-container h3,
+  .print-card-container h4,
+  .print-card-container span,
+  .print-card-container p {
+    color: #1a1a1a !important;
+  }
+
+  /* Reset header spacing and sizes */
+  .print-card-container div[class*="mt-[70px]"] {
+    margin-top: 0 !important;
+    height: auto !important;
+    min-height: auto !important;
+    padding: 0 0 3mm 0 !important;
+    border-bottom: 2px solid #eaeaea !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+  }
+
+  /* Balance body grids & heights */
+  .print-card-container .h-\[686\.4px\] {
+    display: block !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Direct and precise block-level row spacing control on print */
+  .print-card-container .h-\[686\.4px\] > * {
+    margin-top: 4mm !important;
+    margin-bottom: 0 !important;
+    height: auto !important;
+  }
+
+  .print-card-container .h-\[686\.4px\] > *:first-child {
+    margin-top: 3mm !important;
+  }
+
+  /* Hide the trailing empty bottom margin/spacer on print */
+  .print-card-container .h-\[686\.4px\] > *:last-child {
+    display: none !important;
+  }
+
+  /* Force details to display side-by-side in grid on print */
+  .print-card-container .grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 4mm !important;
+    height: auto !important;
+  }
+
+  /* Style interior details cards nicely */
+  .print-card-container .p-6,
+  .print-card-container .p-5 {
+    padding: 3.5mm !important;
+    border-radius: 12px !important;
+    background-color: #faf9f6 !important;
+    border: 1px solid #e9e6df !important;
+  }
+
+  /* Overrides for background cards if on-screen was dark */
+  .print-card-container div[class*="bg-white/5"] {
+    background-color: #f7f6f2 !important;
+    border-color: #eae7e0 !important;
+  }
+
+  /* Keep brand styling for orange card but in printable color tones */
+  .print-card-container div[class*="bg-[#fdf0e1]"] {
+    background-color: #fef8f0 !important;
+    border-color: #fcead2 !important;
+  }
+
+  /* Saccades space-y logic */
+  .print-card-container .space-y-6 > * + * {
+    margin-top: 5mm !important;
+  }
+
+  .print-card-container .space-y-4 > * + * {
+    margin-top: 1.5mm !important;
+  }
+
+  .print-card-container .space-y-3 > * + * {
+    margin-top: 1.25mm !important;
+  }
+
+  /* License plate badge formatting on print */
+  .print-card-container div[class*="h-7"] {
+    height: 24px !important;
+    padding: 2px 8px !important;
+    background-color: #ffffff !important;
+    border: 1.5px solid rgba(0, 0, 0, 0.3) !important;
+  }
+
+  /* Total price block */
+  .print-card-container div[class*="col-span"] {
+    height: auto !important;
+    padding: 2.5mm !important;
+  }
+
+  .print-card-container p[class*="text-emerald"] {
+    color: #059669 !important;
+  }
+
+  /* Routes card */
+  .print-card-container div[class*="h-[60px]"] {
+    height: auto !important;
+    min-height: auto !important;
+    padding: 2.5mm !important;
+    margin-top: 0 !important;
+  }
+
+  /* Dynamic clock logic */
+  .print-card-container div[class*="space-y-3"] {
+    margin-top: 0 !important;
+  }
+}

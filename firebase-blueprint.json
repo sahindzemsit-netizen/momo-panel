@@ -1,0 +1,348 @@
+{
+  "entities": {
+    "Vehicle": {
+      "title": "Vehicle",
+      "description": "A rental vehicle in the fleet",
+      "type": "object",
+      "properties": {
+        "id": { "type": "number", "description": "Unique vehicle ID (Timestamp based)" },
+        "name": { "type": "string", "description": "Vehicle model name" },
+        "plate": { "type": "string", "description": "License plate number" },
+        "chassisNumber": { "type": "string", "description": "Vehicle Identification Number (VIN) / Chassis number" },
+        "country": { "type": "string", "description": "Vehicle home country" },
+        "forcedPhysicalCountry": { "type": "string", "description": "Manually tagged current location country" },
+        "isRetired": { "type": "boolean", "description": "Whether the vehicle is retired from the active fleet" },
+        "status": { "type": "string", "enum": ["AVAILABLE", "MAINTENANCE", "RETIRED"], "description": "Vehicle operational status" },
+        "transmission": { "type": "string", "enum": ["Automatic", "Manual"], "description": "Transmission type" },
+        "statusColor": { "type": "string", "description": "Custom status color hex code" },
+        "statusNote": { "type": "string", "description": "Quick status note" },
+        "displayOrder": { "type": "number", "description": "Manual display order" },
+        "createdAt": { "type": "number", "description": "Creation timestamp" },
+        "updatedAt": { "type": "number", "description": "Last update timestamp" }
+      },
+      "required": ["id", "name", "plate"]
+    },
+    "Reservation": {
+      "title": "Reservation",
+      "description": "A vehicle rental reservation",
+      "type": "object",
+      "properties": {
+        "vehicleId": { "type": "number", "description": "ID of the vehicle being rented" },
+        "name": { "type": "string", "description": "Client name" },
+        "email": { "type": "string", "description": "Client email" },
+        "phone": { "type": "string", "description": "Client phone number" },
+        "passportId": { "type": "string", "description": "Client passport/ID number" },
+        "driverLicenseId": { "type": "string", "description": "Client driver license ID number" },
+        "start": { "type": "string", "format": "date-time", "description": "Rental start date" },
+        "end": { "type": "string", "format": "date-time", "description": "Rental end date" },
+        "days": { "type": "number", "description": "Total rental duration in days" },
+        "totalPrice": { "type": "number", "description": "Total rental cost" },
+        "amountPaid": { "type": "number", "description": "Total amount already paid by client" },
+        "status": { "type": "string", "enum": ["PENDING", "UPCOMING", "ON RENT", "COMPLETED", "CANCELLED"], "description": "Current status" },
+        "note": { "type": "string", "description": "Internal staff note" },
+        "arrivalTime": { "type": "string", "description": "Client arrival time (HH:mm)" },
+        "departureTime": { "type": "string", "description": "Client departure time (HH:mm)" },
+        "processedBy": { "type": "string", "description": "Name of the teammate who processed the reservation" },
+        "cashflowHandledBy": { "type": "string", "description": "Teammate who handled payment cashflow" },
+        "paidTo": { "type": "string", "description": "Name of the paid-to person" },
+        "fromLocation": { "type": "string", "description": "Pickup location country" },
+        "toLocation": { "type": "string", "description": "Drop-off location country" },
+        "countries": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Countries they will travel to"
+        },
+        "insurance": {
+          "type": "object",
+          "properties": {
+            "type": { "type": "string", "enum": ["800", "2000", "5000"] },
+            "price": { "type": "number" },
+            "squares": { "type": "number" },
+            "color": { "type": "string" }
+          },
+          "description": "Selected insurance level"
+        },
+        "clientId": { "type": "string", "description": "ID of the associated client" },
+        "createdAt": { "type": "number", "description": "Creation timestamp" },
+        "updatedAt": { "type": "number", "description": "Last update timestamp" }
+      },
+      "required": ["vehicleId", "name", "start", "end", "createdAt", "updatedAt"]
+    },
+    "Registration": {
+      "title": "Registration",
+      "description": "A vehicle registration document (Insurance, Registration, etc.)",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "vehicleId": { "type": "number" },
+        "vehicleName": { "type": "string" },
+        "plate": { "type": "string" },
+        "type": { "type": "string", "enum": ["Registration", "Insurance"] },
+        "number": { "type": "string" },
+        "startDate": { "type": "number", "description": "Timestamp" },
+        "expiryDate": { "type": "number", "description": "Timestamp" },
+        "createdAt": { "type": "number" },
+        "updatedAt": { "type": "number" }
+      },
+      "required": ["vehicleName", "plate", "type", "startDate", "expiryDate"]
+    },
+    "Payment": {
+      "title": "Payment",
+      "description": "A payment record for a reservation",
+      "type": "object",
+      "properties": {
+        "amount": { "type": "number" },
+        "method": { "type": "string", "enum": ["Cash", "Card"] },
+        "timestamp": { "type": "number" }
+      },
+      "required": ["amount", "method", "timestamp"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "A notification pushed from Gmail scripts or system",
+      "type": "object",
+      "properties": {
+        "subject": { "type": "string" },
+        "timestamp": { "type": "string", "description": "ISO format string" },
+        "date": { "type": "string", "description": "Legacy ISO format string or Timestamp" },
+        "from": { "type": "string" },
+        "body": { "type": "string" },
+        "snippet": { "type": "string" }
+      },
+      "required": ["subject"]
+    },
+    "Client": {
+      "title": "Client",
+      "description": "A rental client profile",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "licenseId": { "type": "string" },
+        "passportId": { "type": "string" },
+        "rentalCount": { "type": "number" },
+        "totalDaysRented": { "type": "number" },
+        "totalSpent": { "type": "number" },
+        "createdAt": { "type": "number" },
+        "gender": { "type": "string", "enum": ["male", "female"], "description": "Client's gender for avatar selection" }
+      },
+      "required": ["name", "email", "phone"]
+    },
+    "Admin": {
+      "title": "Admin",
+      "description": "An authorized administrator",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "role": { "type": "string", "enum": ["ADMIN", "OWNER"] }
+      },
+      "required": ["email"]
+    },
+    "Stats": {
+      "title": "Stats",
+      "description": "Aggregated statistics for the portal",
+      "type": "object",
+      "properties": {
+        "totalCancelledValue": { "type": "number" },
+        "totalCompletedValue": { "type": "number" },
+        "activeVehiclesCount": { "type": "number" },
+        "cancelledCount": { "type": "number" },
+        "completedCount": { "type": "number" },
+        "updatedAt": { "type": "number" }
+      }
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "An audit log entry for a change to a reservation",
+      "type": "object",
+      "properties": {
+        "reservationId": { "type": "string", "description": "Reservation ID of the updated reservation" },
+        "changedBy": { "type": "string", "description": "Email of the team member who made the update" },
+        "timestamp": { "type": "object", "description": "Firebase server timestamp" },
+        "action": { "type": "string", "description": "Type of action performed" },
+        "changedFields": { "type": "object", "description": "Object mapping keys to oldValue/newValue details" }
+      },
+      "required": ["reservationId", "changedBy", "timestamp", "action", "changedFields"]
+    },
+    "DashboardSettings": {
+      "title": "DashboardSettings",
+      "description": "Global settings for the MOMO Portal template",
+      "type": "object",
+      "properties": {
+        "globalReminders": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "List of global dashboard reminders"
+        }
+      }
+    },
+    "Car": {
+      "title": "Car",
+      "description": "A service car with odometer tracking and oil state",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique vehicle ID as document ID" },
+        "vehicleId": { "type": "number", "description": "Associated vehicle ID" },
+        "name": { "type": "string", "description": "Car model name" },
+        "plate": { "type": "string", "description": "License plate number" },
+        "transmission": { "type": "string", "description": "Transmission type" },
+        "odometer": { "type": "number", "description": "Current mileage in kilometers" },
+        "recentKm": { "type": "number", "description": "Kilometers driven since last oil change" },
+        "lastOilChangeDate": { "type": "string", "description": "Date of last oil change" },
+        "oilChangeHistory": { "type": "array", "items": { "type": "string" }, "description": "Historical log entries of previous oil changes with dates and mileage" }
+      },
+      "required": ["vehicleId", "name", "plate", "transmission", "odometer"]
+    },
+    "Analytics": {
+      "title": "Analytics",
+      "description": "Custom analytical configurations and reports",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique analytics document ID" },
+        "timeframe": { "type": "string", "enum": ["TODAY", "WEEKLY", "MONTHLY", "TOTAL"] },
+        "label": { "type": "string", "description": "User friendly label" },
+        "revenueGoal": { "type": "number", "description": "Target revenue milestone for the timeframe" },
+        "rentalsGoal": { "type": "number", "description": "Target completed rentals count milestone" },
+        "cancellationLimit": { "type": "number", "description": "Acceptable limit of cancellations" },
+        "notes": { "type": "string", "description": "Custom notes regarding analytics performance" },
+        "updatedAt": { "type": "number", "description": "Last updated timestamp" },
+        "updatedBy": { "type": "string", "description": "Email of admin who created/updated this" }
+      },
+      "required": ["timeframe", "updatedAt"]
+    },
+    "Expense": {
+      "title": "Expense",
+      "description": "An operational expense or cost",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "date": { "type": "string", "description": "Date of expense (YYYY-MM-DD)" },
+        "category": { "type": "string" },
+        "amount": { "type": "number" },
+        "status": { "type": "string", "enum": ["PENDING", "PAID"] },
+        "teammate": { "type": "string" },
+        "currency": { "type": "string", "enum": ["EUR", "MKD"] },
+        "createdAt": { "type": "number" },
+        "updatedAt": { "type": "number" }
+      },
+      "required": ["date", "category", "amount", "status", "teammate"]
+    },
+    "Cashflow": {
+      "title": "Cashflow",
+      "description": "Financial cashflow ledgers",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "reservationId": { "type": "string" },
+        "name": { "type": "string" },
+        "vehicleId": { "type": "string" },
+        "days": { "type": "number" },
+        "totalPrice": { "type": "number" },
+        "amountPaid": { "type": "number" },
+        "paidTo": { "type": "string" },
+        "cashflowHandledBy": { "type": "string" },
+        "cashflowNote": { "type": "string" },
+        "paymentMethod": { "type": "string" },
+        "receiptUrl": { "type": "string" },
+        "createdAt": { "type": "number" },
+        "isPaid": { "type": "boolean" },
+        "approvedBy": { "type": "string" }
+      },
+      "required": ["reservationId", "name", "vehicleId", "totalPrice", "isPaid", "createdAt"]
+    },
+    "Violation": {
+      "title": "Violation",
+      "description": "A vehicle speed radar or traffic violation logged from notifications",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique violation ID" },
+        "vehicleId": { "type": "number", "description": "Associated vehicle ID" },
+        "vehicleName": { "type": "string", "description": "Car model name" },
+        "plate": { "type": "string", "description": "License plate number" },
+        "datetime": { "type": "string", "description": "Radar violation date and time" },
+        "link": { "type": "string", "description": "Actionable scan link associated with the radar violation" },
+        "status": { "type": "string", "enum": ["waiting", "successful"], "description": "State of payment for violation" },
+        "price": { "type": "number", "description": "Fine cost in euros" },
+        "clientName": { "type": "string", "description": "Name of client renting the vehicle on date of violation" },
+        "clientId": { "type": "string", "description": "ID of client" },
+        "createdAt": { "type": "number", "description": "Creation timestamp" },
+        "updatedAt": { "type": "number", "description": "Last update timestamp" }
+      },
+      "required": ["vehicleId", "vehicleName", "plate", "datetime", "link", "status", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/violations/{violationId}": {
+      "schema": { "$ref": "Violation" },
+      "description": "Violations and traffic fines log"
+    },
+    "/cashflow/{cashflowId}": {
+      "schema": { "$ref": "Cashflow" },
+      "description": "Cashflow transaction records"
+    },
+    "/expenses/{expenseId}": {
+      "schema": { "$ref": "Expense" },
+      "description": "Operational expense logs"
+    },
+    "/analytics/{analyticsId}": {
+      "schema": { "$ref": "Analytics" },
+      "description": "Configurable analytics target parameters, goals, and customized reports"
+    },
+    "/cars/{carId}": {
+      "schema": { "$ref": "Car" },
+      "description": "Registered service cars mileage tracking"
+    },
+    "/settings/{settingsDocId}": {
+      "schema": { "$ref": "DashboardSettings" },
+      "description": "Global settings and dashboard parameters"
+    },
+    "/notifications/{notificationId}": {
+      "schema": { "$ref": "Notification" },
+      "description": "System-wide notifications"
+    },
+    "/vehicles/{vehicleId}": {
+      "schema": { "$ref": "Vehicle" },
+      "description": "Fleet of vehicles"
+    },
+    "/reservations/{reservationId}": {
+      "schema": { "$ref": "Reservation" },
+      "description": "Client reservations"
+    },
+    "/registrations/{registrationId}": {
+      "schema": { "$ref": "Registration" },
+      "description": "Vehicle registrations"
+    },
+    "/clients/{clientId}": {
+      "schema": { "$ref": "Client" },
+      "description": "Rental client profiles"
+    },
+    "/admins/{userId}": {
+      "schema": { "$ref": "Admin" },
+      "description": "Authorized administrators"
+    },
+    "/metadata/stats": {
+      "schema": { "$ref": "Stats" },
+      "description": "Portal-wide statistics"
+    },
+    "/reservations/{reservationId}/paymentHistory/{paymentId}": {
+      "schema": { "$ref": "Payment" },
+      "description": "History of payments for a specific reservation"
+    },
+    "/auditLogs/{reservationId}": {
+      "schema": {
+        "type": "object",
+        "properties": {
+          "reservationId": { "type": "string", "description": "Reservation ID of the updated reservation" },
+          "updatedAt": { "type": "object", "description": "Last updated timestamp" }
+        }
+      },
+      "description": "Marker document indicating audit logs exist for a reservation"
+    },
+    "/auditLogs/{reservationId}/changes/{changeId}": {
+      "schema": { "$ref": "AuditLog" },
+      "description": "Subcollection containing audit trail entries for a specific reservation"
+    }
+  }
+}

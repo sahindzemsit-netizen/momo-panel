@@ -1,0 +1,6 @@
+{
+  "name": "Momo Fleet",
+  "description": "Rental car fleet management dashboard",
+  "requestFramePermissions": ["identity-credentials-get"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

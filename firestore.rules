@@ -1,0 +1,258 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global default-deny catch-all rule
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Reusable core validation helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'sahindzemsit@gmail.com' ||
+        (exists(/databases/$(database)/documents/admins/$(request.auth.uid)) && (
+          get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.role == 'ADMIN' ||
+          get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.role == 'admin' ||
+          get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.password == 'SUPERVISOR' ||
+          get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.password == 'supervisor' ||
+          !('role' in get(/databases/$(database)/documents/admins/$(request.auth.uid)).data)
+        ))
+      );
+    }
+
+    function isWithinBuffer(ts) {
+      return ts is number && (ts >= request.time.toMillis() - 300000) && (ts <= request.time.toMillis() + 300000);
+    }
+
+    // Entity Schemas following specifications
+    function isValidVehicle(data) {
+      return (!data.keys().contains('name') || data.name == null || (data.name is string && data.name.size() >= 0 && data.name.size() <= 100))
+        && (!data.keys().contains('plate') || data.plate == null || (data.plate is string && data.plate.size() >= 0 && data.plate.size() <= 30))
+        && (!data.keys().contains('id') || data.id == null || (data.id is number || data.id is string))
+        && (!data.keys().contains('chassisNumber') || data.chassisNumber == null || (data.chassisNumber is string && data.chassisNumber.size() <= 100))
+        && (!data.keys().contains('status') || data.status == null || data.status in ['AVAILABLE', 'MAINTENANCE', 'RETIRED'])
+        && (!data.keys().contains('isRetired') || data.isRetired == null || data.isRetired is bool)
+        && (!data.keys().contains('color') || data.color == null || (data.color is string && data.color.size() <= 30))
+        && (!data.keys().contains('statusColor') || data.statusColor == null || (data.statusColor is string && data.statusColor.size() <= 30))
+        && (!data.keys().contains('statusNote') || data.statusNote == null || (data.statusNote is string && data.statusNote.size() <= 500))
+        && (!data.keys().contains('country') || data.country == null || (data.country is string && data.country.size() <= 100))
+        && (!data.keys().contains('forcedPhysicalCountry') || data.forcedPhysicalCountry == null || (data.forcedPhysicalCountry is string && data.forcedPhysicalCountry.size() <= 100))
+        && (!data.keys().contains('transmission') || data.transmission == null || (data.transmission in ['Automatic', 'Manual', '']))
+        && (!data.keys().contains('isExtra') || data.isExtra == null || data.isExtra is bool)
+        && (!data.keys().contains('createdAt') || data.createdAt == null || data.createdAt is number || data.createdAt is timestamp)
+        && (!data.keys().contains('updatedAt') || data.updatedAt == null || data.updatedAt is number || data.updatedAt is timestamp)
+        && (!data.keys().contains('displayOrder') || data.displayOrder == null || (data.displayOrder is number || data.displayOrder is string));
+    }
+
+    function isValidReservation(data) {
+      return data.keys().hasAll(['vehicleId', 'name', 'start', 'end', 'createdAt', 'updatedAt'])
+        && (data.vehicleId is number || data.vehicleId is string)
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 128
+        && (data.start is timestamp || (data.start is string && data.start.size() <= 64))
+        && (data.end is timestamp || (data.end is string && data.end.size() <= 64))
+        && (data.createdAt is number || data.createdAt is timestamp)
+        && (data.updatedAt is number || data.updatedAt is timestamp)
+        && (!data.keys().contains('days') || data.days == null || data.days is number)
+        && (!data.keys().contains('totalPrice') || data.totalPrice == null || (data.totalPrice is number && data.totalPrice >= -100000))
+        && (!data.keys().contains('amountPaid') || data.amountPaid == null || (data.amountPaid is number && data.amountPaid >= -100000))
+        && (!data.keys().contains('status') || data.status == null || data.status in ['PENDING', 'UPCOMING', 'ON RENT', 'COMPLETED', 'CANCELLED'])
+        && (!data.keys().contains('cashflowHandledBy') || data.cashflowHandledBy == null || (data.cashflowHandledBy is string && data.cashflowHandledBy.size() <= 200))
+        && (!data.keys().contains('paidTo') || data.paidTo == null || (data.paidTo is string && data.paidTo.size() <= 200));
+    }
+
+    function isValidRegistration(data) {
+      return data.keys().hasAll(['vehicleName', 'plate', 'type', 'startDate', 'expiryDate'])
+        && data.vehicleName is string && data.vehicleName.size() > 0 && data.vehicleName.size() <= 128
+        && data.plate is string && data.plate.size() > 0 && data.plate.size() <= 30
+        && data.type in ['Registration', 'Insurance']
+        && data.startDate is number
+        && data.expiryDate is number;
+    }
+
+    function isValidClient(data) {
+      return data.keys().hasAll(['name', 'email', 'phone'])
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 128
+        && data.email is string && data.email.size() > 0 && data.email.size() <= 128
+        && data.phone is string && data.phone.size() > 0 && data.phone.size() <= 50;
+    }
+
+    function isValidNotification(data) {
+      return data.keys().hasAll(['subject'])
+        && data.subject is string && data.subject.size() > 0 && data.subject.size() <= 512;
+    }
+
+    function isValidPayment(data) {
+      return data.keys().hasAll(['amount', 'method', 'timestamp'])
+        && data.amount is number && data.amount >= 0
+        && data.method in ['Cash', 'Card']
+        && data.timestamp is number;
+    }
+
+    function isValidAuditLog(data) {
+      return data.keys().hasAll(['reservationId', 'changedBy', 'timestamp', 'action', 'changedFields'])
+        && data.reservationId is string && data.reservationId.size() > 0 && data.reservationId.size() <= 128
+        && data.changedBy is string && data.changedBy.size() > 0 && data.changedBy.size() <= 200
+        && data.timestamp is timestamp
+        && data.action is string && data.action.size() > 0 && data.action.size() <= 100
+        && data.changedFields is map;
+    }
+
+    function isValidAnalytics(data) {
+      return data.keys().hasAll(['timeframe', 'updatedAt'])
+        && data.timeframe in ['TODAY', 'WEEKLY', 'MONTHLY', 'TOTAL']
+        && data.updatedAt is number
+        && (!data.keys().contains('label') || data.label == null || (data.label is string && data.label.size() <= 128))
+        && (!data.keys().contains('revenueGoal') || data.revenueGoal == null || data.revenueGoal is number)
+        && (!data.keys().contains('rentalsGoal') || data.rentalsGoal == null || data.rentalsGoal is number)
+        && (!data.keys().contains('cancellationLimit') || data.cancellationLimit == null || data.cancellationLimit is number)
+        && (!data.keys().contains('notes') || data.notes == null || (data.notes is string && data.notes.size() <= 2000))
+        && (!data.keys().contains('updatedBy') || data.updatedBy == null || (data.updatedBy is string && data.updatedBy.size() <= 200));
+    }
+
+    function isValidExpense(data) {
+      return data.keys().hasAll(['date', 'category', 'amount', 'status', 'teammate'])
+        && data.date is string && data.date.size() <= 64
+        && data.category is string && data.category.size() > 0 && data.category.size() <= 128
+        && data.amount is number && data.amount >= 0
+        && data.status in ['PENDING', 'PAID']
+        && data.teammate is string && data.teammate.size() > 0 && data.teammate.size() <= 128
+        && (!data.keys().contains('currency') || data.currency == null || data.currency in ['EUR', 'MKD'])
+        && (!data.keys().contains('createdAt') || data.createdAt == null || data.createdAt is number)
+        && (!data.keys().contains('updatedAt') || data.updatedAt == null || data.updatedAt is number);
+    }
+
+    function isValidViolation(data) {
+      return data.keys().hasAll(['vehicleId', 'vehicleName', 'plate', 'datetime', 'link', 'status', 'createdAt', 'updatedAt'])
+        && (data.vehicleId is number || data.vehicleId is string)
+        && data.vehicleName is string && data.vehicleName.size() > 0
+        && data.plate is string && data.plate.size() > 0
+        && data.datetime is string
+        && data.link is string
+        && data.status in ['waiting', 'successful']
+        && (data.createdAt is number || data.createdAt is timestamp)
+        && (data.updatedAt is number || data.updatedAt is timestamp)
+        && (!data.keys().contains('price') || data.price == null || data.price is number)
+        && (!data.keys().contains('clientName') || data.clientName == null || data.clientName is string)
+        && (!data.keys().contains('clientId') || data.clientId == null || data.clientId is string);
+    }
+
+    // Rules Mapping for collections listed in firebase-blueprint.json
+
+    // Violations Path
+    match /violations/{violationId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Expenses Path
+    match /expenses/{expenseId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin() && isValidExpense(incoming());
+      allow update: if isAdmin() && isValidExpense(incoming());
+      allow delete: if isAdmin();
+    }
+
+    // Admins Path
+    match /admins/{userId} {
+      allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow write: if isSignedIn() && isAdmin();
+    }
+
+    // Analytics Path
+    match /analytics/{analyticsId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin() && isValidAnalytics(incoming());
+      allow update: if isAdmin() && isValidAnalytics(incoming());
+      allow delete: if isAdmin();
+    }
+
+    // Vehicles Path
+    match /vehicles/{vehicleId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Reservations Path
+    match /reservations/{reservationId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Cashflow Path
+    match /cashflow/{cashflowId} {
+      allow create: if isAdmin();
+      allow read, write: if isAdmin() && (
+        request.auth.token.email == 'sahindzemsit@gmail.com' ||
+        (exists(/databases/$(database)/documents/admins/$(request.auth.uid)) && (
+          get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.password == 'SUPERVISOR' ||
+          get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.password == 'supervisor'
+        ))
+      );
+    }
+
+    // Payment History subcollection
+    match /reservations/{reservationId}/paymentHistory/{paymentId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Registrations Path
+    match /registrations/{registrationId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Clients Path
+    match /clients/{clientId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Notifications Path
+    match /notifications/{notificationId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Cars Path
+    match /cars/{carId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Portal Metrics Stats document
+    match /metadata/stats {
+      allow read, write: if isAdmin();
+    }
+
+    // Settings Path
+    match /settings/{settingsDocId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Audit Logs Path
+    match /auditLogs/{reservationId} {
+      allow create, update: if isAdmin();
+      allow read: if isAdmin();
+      allow delete: if false;
+
+      match /changes/{changeId} {
+        allow create: if isAdmin() && isValidAuditLog(incoming()) && incoming().timestamp == request.time && incoming().reservationId == reservationId;
+        allow read: if isAdmin();
+        allow update, delete: if false;
+      }
+    }
+  }
+}
