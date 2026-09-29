@@ -1,0 +1,13 @@
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Existing rule
+    match /reservation_documents/{reservationId}/{allPaths=**} {
+      allow read, write: if request.auth != null;
+    }
+
+    // New rule to match your specific path
+    match /receipt_documents /{receiptId}/{allPaths=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}
