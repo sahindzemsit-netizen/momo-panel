@@ -1,0 +1,6 @@
+{
+  "name": "Momo Fleet",
+  "description": "Rental car fleet management dashboard with reservations, cashflow, damages tracking with interactive car skeleton blueprint, violations, and fleet analytics",
+  "requestFramePermissions": ["identity-credentials-get"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
